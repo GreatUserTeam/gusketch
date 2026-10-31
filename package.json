@@ -1,0 +1,119 @@
+{
+  "name": "gusketch",
+  "productName": "GUSketch",
+  "version": "1.0.0",
+  "description": "GUSketch (Great User Sketch) — десктопное приложение для рисования и заметок от GUTeam.",
+  "author": "GUTeam (https://guteam.net)",
+  "homepage": "https://projects.guteam.net/gusketch",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GreatUserTeam/gusketch"
+  },
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:linux": "electron-builder --linux",
+    "build:deb": "electron-builder --linux deb",
+    "build:rpm": "electron-builder --linux rpm",
+    "build:appimage": "electron-builder --linux AppImage",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --linux --win"
+  },
+  "keywords": [
+    "electron",
+    "canvas",
+    "drawing",
+    "sketch",
+    "notes",
+    "guteam",
+    "gusketch"
+  ],
+  "dependencies": {
+    "jspdf": "^4.2.1",
+    "jszip": "^3.10.2"
+  },
+  "devDependencies": {
+    "electron-builder": "^26.15.3",
+    "electron": "^44.7.0"
+  },
+  "build": {
+    "appId": "net.guteam.gusketch",
+    "productName": "GUSketch",
+    "copyright": "© 2025 GUTeam (guteam.net)",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "style.css",
+      "src/**/*",
+      "build/icons/64x64.png",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Graphics",
+      "icon": "build/icons",
+      "synopsis": "Рисовалка и заметки от GUTeam",
+      "description": "GUSketch — десктопное приложение для рисования и заметок с поддержкой графических планшетов. Продукт GUTeam.",
+      "maintainer": "GUTeam <team@guteam.net>",
+      "vendor": "GUTeam"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GUSketch"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.graphics-design",
+      "icon": "build/icon.icns"
+    }
+  }
+}

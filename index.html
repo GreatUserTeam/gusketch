@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' data: blob:;"
+  />
+  <title>GUSketch — Great User Sketch</title>
+
+  <!-- Inter (Google Fonts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Слои холста: сетка снизу, штрихи сверху -->
+  <canvas id="grid" aria-hidden="true"></canvas>
+  <canvas id="board" aria-label="Холст для рисования"></canvas>
+
+  <!-- Кастомный курсор-круг для кисти/ластика -->
+  <div id="cursorRing" class="cursor-ring" aria-hidden="true"></div>
+
+  <!-- Слой интерфейса (масштабируется целиком через --ui-scale) -->
+  <div id="ui">
+
+  <!-- Шапка -->
+  <header class="header">
+    <div class="brand-text" aria-label="GUSketch">
+      <svg class="header-g-icon" id="brandTitleSvgG" viewBox="170 110 145 145" xmlns="http://www.w3.org/2000/svg">
+        <g fill-rule="evenodd" stroke="none">
+          <path class="svg-body" d="M237.28036,246.18861l-4.38577,-0.53453c-7.5097,-0.91133 -15.81461,-4.07031 -20.48517,-6.22376c-15.69851,-7.23586 -29.55026,-24.85122 -33.16928,-42.1818l-0.65721,-2.83257c-0.54548,-1.83142 -1.09754,-5.94116 -1.33851,-9.98299c-1.09973,-18.30762 4.73847,-35.95804 16.1936,-48.95542c7.40673,-8.40569 18.86625,-15.86938 28.39796,-18.49602l3.50511,-1.02086c5.02107,-1.58606 13.31941,-2.52149 20.04484,-2.2608l11.28207,0.19278c7.80982,0 9.12424,0.2826 15.23408,3.27947c5.50521,2.69893 10.55476,7.45712 12.55705,11.83193c2.02639,4.42301 3.8841,5.5074 -0.93543,3.3671c-6.25224,-2.77561 -7.23805,-2.80847 -7.24681,-0.24974c-0.02191,6.78239 -5.37596,13.27122 -12.051,14.60535c-2.98372,0.59587 -4.67494,0.02191 -9.85812,-3.343c-4.98383,-3.23565 -6.05508,-3.4832 -13.36323,-3.0845c-10.15386,0.55205 -21.03723,6.49102 -26.6213,14.52649l-1.66931,2.33309c-4.06374,5.53369 -6.46035,14.80032 -6.25662,24.18963c0.14678,6.75391 0.03943,5.24233 2.47548,13.43552c2.36157,7.93688 9.34331,16.29438 17.39629,20.82254c9.63467,5.41758 25.32441,6.06603 37.32284,1.54225c5.8141,-2.19288 5.43511,-1.5532 5.35186,-9.01032l0.06572,-13.49905l-12.59868,-0.06353c-8.05518,-0.04162 -12.66002,-0.14459 -12.77174,-0.28479l0.04381,-20.15438l52.4671,0.1183v51.22717l-6.10765,4.95535c-4.23461,3.4372 -12.34456,8.34435 -16.07531,9.72887l-3.59712,1.51815c-1.29032,0.65064 -5.81191,2.01982 -9.59962,2.90705c-5.04078,1.17859 -19.18609,2.13812 -23.54995,1.59702z"/>
+          <path class="svg-beak" d="M295.83978,162.01341c-1.14354,-0.58272 -5.60379,-2.32213 -7.07813,-3.09326c-2.14031,-1.11944 -2.74713,-1.12821 -10.07719,-4.65303c-10.19549,-4.90058 -11.86041,-3.21156 -7.18547,-6.41873c3.18089,-2.17974 3.45472,-2.43824 4.86553,-4.60046c1.66274,-2.54778 1.77446,-2.83476 2.79971,-7.17452c0.31546,-1.33851 1.48748,-1.14573 6.39244,1.04277c2.75151,1.22898 3.25537,1.72408 4.83486,4.74723c1.37795,2.64198 2.99687,4.74723 4.28281,6.97079c1.19612,2.06801 4.82829,7.59513 6.07698,9.24473c3.92134,5.18537 2.53244,7.73096 -4.91153,3.93448z"/>
+        </g>
+      </svg>
+      <span>U</span>
+      <span class="highlight-t">Sketch</span>
+    </div>
+
+    <div class="header__right">
+      <div id="status" class="status" title="Состояние документа">
+        <span class="status__dot"></span>
+        <span class="status__text" data-i18n="statusSaved">Сохранено</span>
+      </div>
+
+      <div class="history">
+        <button id="undoBtn" class="icon-btn" type="button" data-i18n-tip="toolUndo" data-i18n-key="keyUndo" aria-label="Отменить">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5" /><path d="M4 12h9.5a5.5 5.5 0 0 1 5.5 5.5V18" /></svg>
+        </button>
+        <button id="redoBtn" class="icon-btn" type="button" data-i18n-tip="toolRedo" data-i18n-key="keyRedo" aria-label="Повторить">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5" /><path d="M20 12h-9.5A5.5 5.5 0 0 0 5 17.5V18" /></svg>
+        </button>
+      </div>
+
+      <!-- Сетка: кастомный выпадающий список -->
+      <div class="dropdown" id="gridDropdown">
+        <button id="gridBtn" class="icon-btn icon-btn--dropdown" type="button" data-i18n-tip="gridTitle" data-i18n-key="keyGrid" aria-label="Сетка и режим">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 9h18M3 15h18M9 3v18M15 3v18" /></svg>
+          <svg class="caret" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+        </button>
+        <div class="dropdown__menu" id="gridMenu" hidden>
+          <button class="dropdown__item" type="button" data-grid="none"><span class="dropdown__check"></span><span data-i18n="gridNone">Нет</span></button>
+          <button class="dropdown__item" type="button" data-grid="squares"><span class="dropdown__check"></span><span data-i18n="gridSquares">Клетка</span></button>
+          <button class="dropdown__item" type="button" data-grid="lines"><span class="dropdown__check"></span><span data-i18n="gridLines">Линейка</span></button>
+          <button class="dropdown__item" type="button" data-grid="dots"><span class="dropdown__check"></span><span data-i18n="gridDots">Точки</span></button>
+          <div class="dropdown__size" id="gridSizeWrap" hidden>
+            <span class="dropdown__size-label" data-i18n="gridSize">Размер</span>
+            <input id="gridSize" class="size__range" type="range" min="10" max="100" step="1" value="25" aria-label="Размер сетки" />
+            <output id="gridSizeValue" class="size__value" for="gridSize">25 px</output>
+          </div>
+        </div>
+      </div>
+
+      <!-- Фото -->
+      <button id="imageBtn" class="icon-btn" type="button" data-i18n-tip="toolImage" aria-label="Загрузить фото">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="m4 17 4.5-4.5 4 4L16 13l4 4" /></svg>
+      </button>
+
+      <div class="seg" id="themeSeg" style="--seg-count:2;--seg-index:0" role="group" aria-label="Тема оформления">
+        <span class="seg__thumb" aria-hidden="true"></span>
+        <button class="seg__btn is-active" type="button" data-theme-value="dark" data-i18n-tip="themeDark" aria-label="Тёмная тема">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5Z" /></svg>
+        </button>
+        <button class="seg__btn" type="button" data-theme-value="light" data-i18n-tip="themeLight" aria-label="Светлая тема">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" /></svg>
+        </button>
+      </div>
+
+      <button id="settingsBtn" class="icon-btn" type="button" data-i18n-tip="settingTitle" aria-label="Настройки">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" /></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Полоса вкладок -->
+  <div class="tabbar">
+    <div id="tabList" class="tabbar__list" role="tablist" aria-label="Вкладки"></div>
+    <button id="addTabBtn" class="tab-add" type="button" data-i18n-tip="menuNewTab" data-i18n-key="keyNewTab" aria-label="Новая вкладка">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+    </button>
+  </div>
+
+  <!-- Полоса подвкладок (листов) активной вкладки -->
+  <div id="sheetBar" class="sheetbar" hidden>
+    <div id="sheetList" class="sheetbar__list" role="tablist" aria-label="Листы"></div>
+    <button id="addSheetBtn" class="sheet-add" type="button" data-i18n-tip="menuNewSheet" aria-label="Новый лист">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+    </button>
+  </div>
+
+  <!-- Левая панель инструментов -->
+  <aside class="toolbar" id="toolbar">
+    <button class="toolbar__collapse" id="collapseBtn" type="button" data-i18n-tip="btnCollapse">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /><path d="M6 4v16" /></svg>
+      <span data-i18n="btnCollapse">Свернуть</span>
+    </button>
+
+    <div id="toolList" class="tool-list" role="group" aria-label="Инструменты">
+      <div class="tool-row">
+        <button class="tool" type="button" data-tool="brush" data-i18n-tip="toolBrush" data-i18n-key="keyBrush" aria-label="Ручка">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3.8 20.2 8.5 11 17.7a3 3 0 0 1-1.5.8l-4.3.9.9-4.3a3 3 0 0 1 .8-1.5Z" /><path d="m13.3 6 4.7 4.7" /></svg>
+        </button>
+        <button class="tool" type="button" data-tool="marker" data-i18n-tip="toolMarker" data-i18n-key="keyMarker" aria-label="Маркер">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 16 7l3 3-7 7H9Z" /><path d="M9 14H6l-2 4 4-2v-2Z" /><path d="M16 7l1.5-1.5a2 2 0 0 1 2.8 0l0 0a2 2 0 0 1 0 2.8L19 9.8" /></svg>
+        </button>
+      </div>
+      <div class="tool-row">
+        <button class="tool" type="button" data-tool="eraser" data-i18n-tip="toolEraser" data-i18n-key="keyEraser" aria-label="Ластик">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 15.2 11 8.4l5.3 5.3-2.7 2.7a2 2 0 0 1-1.4.6H6.5a2 2 0 0 1-1.4-.6Z" /><path d="m11 8.4 3.6-3.6a2 2 0 0 1 2.8 0l2.5 2.5a2 2 0 0 1 0 2.8L16.3 13.7" /><path d="M8.5 20h11" /></svg>
+        </button>
+        <button class="tool" type="button" data-tool="move" data-i18n-tip="toolMove" data-i18n-key="keyMove" aria-label="Переместить">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18" /><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3" /></svg>
+        </button>
+      </div>
+      <div class="tool-row">
+        <button class="tool tool--wide tool--shape" type="button" data-tool="shape" data-i18n-tip="toolShape" aria-label="Фигуры">
+          <span class="tool__text" data-i18n="paramShape">Фигуры</span>
+          <span class="tool__icon" id="shapeToolIcon" title="Выбрать фигуру"></span>
+        </button>
+      </div>
+      <div class="tool-row">
+        <button class="tool" type="button" data-tool="arrow" data-i18n-tip="toolArrow" data-i18n-key="keyArrow" aria-label="Стрелка">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5" /><path d="M12 5h7v7" /></svg>
+        </button>
+        <button class="tool" type="button" data-tool="line" data-i18n-tip="toolLine" data-i18n-key="keyLine" aria-label="Линия">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 19 19 5" /></svg>
+        </button>
+      </div>
+      <div class="tool-row">
+        <button class="tool tool--wide tool--text" type="button" data-tool="text" data-i18n-tip="toolText" data-i18n-key="keyText" aria-label="Текст">
+          <span class="tool__text" data-i18n="paramText">Текст</span>
+          <span class="tool__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h9M9.5 6v12M7 18h5" /><path d="M15 12h6M18 12v6" /></svg></span>
+        </button>
+      </div>
+      <div class="tool-row">
+        <button class="tool" type="button" data-tool="lasso" data-i18n-tip="toolLasso" data-i18n-key="keyLasso" aria-label="Лассо">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4c4.4 0 8 2.5 8 5.5S16.4 15 12 15c-1 0-2-.1-2.9-.3" /><path d="M5.4 12.3C4.5 11.4 4 10.5 4 9.5 4 6.5 7.6 4 12 4" /><path d="M9.1 14.7C6.7 14 5 12.8 5 11.5" /><path d="M8 15.5c-.2.8-.7 1.5-1.4 2" /><circle cx="6" cy="19.5" r="1.5" /></svg>
+        </button>
+        <button class="tool" type="button" data-tool="hand" data-i18n-tip="toolHand" data-i18n-key="keyHand" aria-label="Рука">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 11V6.5a1.5 1.5 0 0 1 3 0V11" /><path d="M11 11V5.5a1.5 1.5 0 0 1 3 0V11" /><path d="M14 11V6.5a1.5 1.5 0 0 1 3 0V14" /><path d="M17 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.5a6 6 0 0 1-6-6v-1a1.5 1.5 0 0 1 3 0" /></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Свёрнутая панель (кружок у края) -->
+  <button id="toolBubble" class="tool-bubble" type="button" data-tip="Развернуть панель" hidden>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg>
+  </button>
+
+  <!-- Панель параметров инструмента -->
+  <aside id="paramPanel" class="param-panel" hidden>
+    <div class="param-panel__head">
+      <span class="param-panel__title" id="paramTitle">Параметры</span>
+      <div class="param-panel__actions">
+        <button id="paramPin" class="panel-btn" type="button" data-tip="Закрепить" aria-label="Закрепить">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5" /><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3Z" /></svg>
+        </button>
+      </div>
+    </div>
+    <div class="param-panel__body" id="paramBody"></div>
+    <button id="paramCollapse" class="panel-full-btn" type="button" data-tip="Свернуть параметры">Свернуть</button>
+  </aside>
+  <button id="paramExpand" class="panel-full-btn panel-full-btn--expand" type="button" data-tip="Показать параметры" hidden>Развернуть</button>
+
+  <!-- Панель свойств объекта -->
+  <aside id="properties" class="properties" hidden style="display:none">
+    <div class="properties__title" id="propsTitle">Свойства</div>
+    <div id="propsBody" class="properties__body"></div>
+  </aside>
+
+  <!-- Inline-редактор текста -->
+  <textarea id="textEditor" class="text-editor" hidden spellcheck="false" aria-label="Ввод текста"></textarea>
+
+  <!-- Тосты -->
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <!-- Модальное окно подтверждения -->
+  <div id="confirmModal" class="modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__dialog modal__dialog--sm" role="dialog" aria-modal="true">
+      <h2 class="modal__title" id="confirmTitle">Подтверждение</h2>
+      <p class="modal__message" id="confirmMessage"></p>
+      <div class="modal__actions" id="confirmActions"></div>
+    </div>
+  </div>
+
+  <!-- Окно настроек -->
+  <div id="settingsOverlay" class="settings-overlay" hidden>
+    <div class="settings-header">
+      <div class="settings-title" data-i18n="settingTitle">Настройки</div>
+      <button class="settings-close-btn" id="closeSettingsBtn" type="button" data-close aria-label="Закрыть">✕</button>
+    </div>
+
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-section-title" data-i18n="settingsAppearance">Внешний вид</div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingTheme">Тема</div>
+          <div class="settings-control">
+            <div class="seg" id="setTheme" style="--seg-count:3;--seg-index:0">
+              <span class="seg__thumb" aria-hidden="true"></span>
+              <button class="seg__btn" type="button" data-value="dark" data-i18n="themeDark">Тёмная</button>
+              <button class="seg__btn" type="button" data-value="light" data-i18n="themeLight">Светлая</button>
+              <button class="seg__btn" type="button" data-value="system" data-i18n="themeSystem">Системная</button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingUIScale">Масштаб интерфейса</div>
+          <div class="settings-control">
+            <div class="range-container">
+              <input type="range" min="75" max="200" step="5" value="100" class="range-input" id="uiScaleRange">
+              <span class="range-val" id="uiScaleRangeVal">100%</span>
+            </div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingAccentColor">Цвет акцента</div>
+          <div class="settings-control">
+            <button id="setAccentBtn" class="color-swatch-btn" type="button" aria-label="Цвет акцента"></button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingLanguage">Язык интерфейса</div>
+          <div class="settings-control">
+            <div class="seg" id="setLang" style="--seg-count:3;--seg-index:0">
+              <span class="seg__thumb" aria-hidden="true"></span>
+              <button class="seg__btn" type="button" data-value="auto" data-i18n="langAuto">Авто</button>
+              <button class="seg__btn" type="button" data-value="ru" data-i18n="langRU">RU</button>
+              <button class="seg__btn" type="button" data-value="en" data-i18n="langEN">EN</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title" data-i18n="settingsDrawing">Рисование</div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingDefaultWidth">Толщина кисти по умолчанию</div>
+          <div class="settings-control">
+            <input id="setDefWidth" class="size__range" type="range" min="1" max="100" step="1" value="10" />
+            <output id="setDefWidthVal" class="size__value">10 px</output>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingDefaultColor">Цвет кисти по умолчанию</div>
+          <div class="settings-control">
+            <button id="setDefColorBtn" class="color-swatch-btn" type="button" aria-label="Цвет кисти по умолчанию"></button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingSmoothing">Сглаживание штрихов</div>
+          <div class="settings-control">
+            <input id="setSmoothing" class="switch" type="checkbox" checked />
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingStabilizer">Стабилизация пера</div>
+          <div class="settings-control">
+            <input id="setStabilizer" class="size__range" type="range" min="0" max="100" step="1" value="0" />
+            <output id="setStabilizerVal" class="size__value">0%</output>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title" data-i18n="settingsFiles">Файлы</div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingAutosave">Автосохранение</div>
+          <div class="settings-control">
+            <input id="setAutosave" class="switch" type="checkbox" checked />
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingAutosaveInterval">Интервал автосохранения</div>
+          <div class="settings-control">
+            <input id="setInterval" class="size__range" type="range" min="1" max="300" step="1" value="5" />
+            <output id="setIntervalVal" class="size__value">5 сек</output>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingDefaultFolder">Папка по умолчанию</div>
+          <div class="settings-control">
+            <button id="setDefaultFolderBtn" class="set-btn" type="button" data-i18n="settingChooseFolder">Выбрать...</button>
+          </div>
+        </div>
+        <div class="settings-hint" id="setFolderHint" data-i18n="settingFolderNotSelected">Папка не выбрана</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title" data-i18n="settingsBehavior">Поведение</div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingCloseBehavior">Что делать при нажатии на крестик</div>
+          <div class="settings-control">
+            <div class="set-dropdown" id="setCloseBehavior">
+              <button
+                class="set-dropdown__trigger"
+                id="setCloseBehaviorTrigger"
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-controls="setCloseBehaviorMenu"
+                data-i18n-aria="settingCloseBehavior"
+              >
+                <span class="set-dropdown__value" id="setCloseBehaviorValue">Закрыть программу</span>
+                <svg class="set-dropdown__chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              <div class="set-dropdown__menu" id="setCloseBehaviorMenu" role="listbox" data-i18n-aria="settingCloseBehavior" hidden>
+                <button class="set-dropdown__item is-active" type="button" role="option" data-value="quit" data-i18n="closeBehaviorQuit" aria-selected="true">Закрыть программу</button>
+                <button class="set-dropdown__item" type="button" role="option" data-value="tray" data-i18n="closeBehaviorTray" aria-selected="false">Свернуть в трей</button>
+                <button class="set-dropdown__item" type="button" role="option" data-value="nothing" data-i18n="closeBehaviorNothing" aria-selected="false">Ничего не делать</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingRestoreTabs">Восстанавливать вкладки при запуске</div>
+          <div class="settings-control">
+            <input id="setRestoreTabs" class="switch" type="checkbox" checked />
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingConfirmTabDelete">Подтверждать удаление раздела</div>
+          <div class="settings-control">
+            <input id="setConfirmTabDelete" class="switch" type="checkbox" checked />
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingConfirmSheetDelete">Подтверждать удаление листа</div>
+          <div class="settings-control">
+            <input id="setConfirmSheetDelete" class="switch" type="checkbox" checked />
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingConfirmPresetDelete">Подтверждать удаление плитки</div>
+          <div class="settings-control">
+            <input id="setConfirmPresetDelete" class="switch" type="checkbox" checked />
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingWarnOccupiedName">Предупреждать о занятом имени</div>
+          <div class="settings-control">
+            <input id="setWarnName" class="switch" type="checkbox" checked />
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title" data-i18n="settingsCanvas">Холст</div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingBoundsPadding">Отступ границы холста</div>
+          <div class="settings-control">
+            <input id="setBounds" class="size__range" type="range" min="100" max="5000" step="50" value="500" />
+            <output id="setBoundsVal" class="size__value">500 px</output>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label" data-i18n="settingGridColor">Цвет сетки</div>
+          <div class="settings-control">
+            <button id="setGridColorBtn" class="color-swatch-btn" type="button" aria-label="Цвет сетки"></button>
+            <button id="setGridColorReset" class="set-btn set-btn--sm" type="button" data-i18n="settingGridColorReset">Тема</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title" data-i18n="settingsAbout">О программе</div>
+        <div class="settings-row">
+          <div class="settings-label">GUSketch — Great User Sketch</div>
+          <div class="settings-control">
+            <span class="set-version"><span data-i18n="settingVersion">Версия</span> <span id="aboutVersion">1.0.0</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title" data-i18n="settingsAboutDevs">О разработчиках</div>
+        <div class="sabout">
+          <h4 class="sabout__title" data-i18n="aboutTeamTitle">О нашей команде</h4>
+          <p class="sabout__subtitle" data-i18n="aboutTeamSubtitle">Кто мы такие</p>
+          <p class="sabout__text" data-i18n="aboutTeamText">Мы — программисты, дизайнеры и другие IT-специалисты, работающие на общее благо нашей команды. Вместе мы создаём востребованные цифровые продукты, которыми хочется пользоваться каждый день.</p>
+          <button class="sabout__cta" type="button" data-url="https://guteam.net/about/" data-i18n="aboutTeamCTA">Подробнее о Great User Team</button>
+
+          <div class="sabout__features">
+            <div class="sabout__feature">
+              <div class="sabout__icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20v-6"/><path d="M10 20V5"/><path d="M16 20v-10"/><path d="M3 20h18"/></svg>
+              </div>
+              <div class="sabout__feature-body">
+                <div class="sabout__feature-title" data-i18n="aboutFeatureCustomization">Кастомизация</div>
+                <p class="sabout__feature-text" data-i18n="aboutFeatureCustomizationDesc">Пользователь сам выбирает тот интерфейс, который ему по душе, а не тот, который решила сделать корпорация.</p>
+              </div>
+            </div>
+            <div class="sabout__feature">
+              <div class="sabout__icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6Z"/></svg>
+              </div>
+              <div class="sabout__feature-body">
+                <div class="sabout__feature-title" data-i18n="aboutFeatureOptimization">Оптимизация</div>
+                <p class="sabout__feature-text" data-i18n="aboutFeatureOptimizationDesc">Безупречная работа, без лагов и задержек.</p>
+              </div>
+            </div>
+            <div class="sabout__feature">
+              <div class="sabout__icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 5.5V11c0 4.4 3 7.5 7 9 4-1.5 7-4.6 7-9V5.5Z"/><path d="m9 11.5 2 2 4-4"/></svg>
+              </div>
+              <div class="sabout__feature-body">
+                <div class="sabout__feature-title" data-i18n="aboutFeatureFreedom">Свобода</div>
+                <p class="sabout__feature-text" data-i18n="aboutFeatureFreedomDesc">Никакой слежки и сбора данных. Все наши продукты абсолютно бесплатны и с открытым кодом.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sabout__resources">
+            <div class="sabout__resources-title" data-i18n="aboutResourcesTitle">Ресурсы GUTeam:</div>
+            <div class="sabout__resources-list">
+              <button class="link-btn dev-link-btn" type="button" data-url="https://guteam.net"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span data-i18n="aboutResourceSite">Сайт</span></button>
+              <button class="link-btn dev-link-btn" type="button" data-url="https://t.me/GreatUserTeam"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><span data-i18n="aboutResourceTGChannel">TG-канал</span></button>
+              <button class="link-btn dev-link-btn" type="button" data-url="https://t.me/GreatUserTeamForum"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span data-i18n="aboutResourceTGForum">TG-форум</span></button>
+              <button class="link-btn dev-link-btn" type="button" data-url="https://github.com/GreatUserTeam"><svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg><span data-i18n="aboutResourceGitHub">GitHub</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- Библиотеки ZIP и PDF (UMD из node_modules) -->
+  <script src="node_modules/jszip/dist/jszip.min.js"></script>
+  <script src="node_modules/jspdf/dist/jspdf.umd.min.js"></script>
+
+  <!-- Точка входа приложения (ES-модуль) -->
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

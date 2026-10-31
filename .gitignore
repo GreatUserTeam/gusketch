@@ -1,0 +1,16 @@
+node_modules/
+dist/
+out/
+*.log
+GUPet/
+GUPET/
+GUPet_*/
+GUPet-*/
+GUPet.tar.xz
+backup_*/
+.shot-main.js
+.gusketch-shot/
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.env
